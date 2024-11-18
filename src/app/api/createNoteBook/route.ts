@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server"
 import { auth } from "@clerk/nextjs/server"
-import { generateImagePrompt } from "@/lib/openai"
+import { generateImagePrompt, generateImage } from "@/lib/openai"
+import { db } from "@/lib/db"
+import { notes } from "@/lib/db/schema"
 
 // /api/createNoteBook
 export async function POST(req: Request) {
@@ -12,5 +14,30 @@ export async function POST(req: Request) {
   const { name } = body
   const image_description = await generateImagePrompt(name);
   console.log(image_description)
-  return new NextResponse("ok")
+  if (!image_description) {
+    return new NextResponse("Failed to generate image description", {
+      status: 500,
+    })
+  }
+  const image_url = await generateImage(image_description)
+  if (!image_url) {
+    return new NextResponse("Failed to generate Image", {
+      status: 500,
+    })
+  }
+  const note_ids = await db
+    .insert(notes)
+    .values({
+      name: name,
+      userId,
+      imageUrl: image_url,
+    })
+    .returning({
+      insertedId: notes.id,
+    })
+
+  return NextResponse.json({
+    note_id: note_ids[0].insertedId
+  })
+
 }

@@ -8,7 +8,7 @@ const openai = new OpenAIApi(config)
 export async function generateImagePrompt(name: string) {
   try {
     const res = await openai.createChatCompletion({
-      model: "gpt-4o",
+      model: "gpt-3.5-turbo-instruct",
       messages: [
         {
           role: "system",
@@ -21,7 +21,8 @@ export async function generateImagePrompt(name: string) {
       ]
     })
     const data = await res.json()
-    const image_description = data.choices[0].message.content
+    console.log("resopnse data", data)
+    const image_description = data?.choices[0]?.message?.content
     return image_description as string
   } catch (e) {
     console.log(e)
@@ -29,6 +30,21 @@ export async function generateImagePrompt(name: string) {
   }
 }
 
-export async function generateImage() {
-
+export async function generateImage(image_description: string) {
+  try {
+    const res = await openai.createImage({
+      prompt: image_description,
+      n: 1,
+      size: '256x256',
+    })
+    const data = await res.json()
+    if (data?.choices && data.choices.length > 0) {
+      const image_url = data?.data[0]?.url
+      return image_url as string
+    } else {
+      console.error("No choices returned from API", data)
+    }
+  } catch (e) {
+    console.error(e)
+  }
 }
