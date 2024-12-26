@@ -3,12 +3,13 @@ import { Configuration, OpenAIApi } from "openai-edge"
 const config = new Configuration({
   apiKey: process.env.OPENAI_API_KEY
 })
+
 const openai = new OpenAIApi(config)
 
 export async function generateImagePrompt(name: string) {
   try {
     const res = await openai.createChatCompletion({
-      model: "gpt-3.5-turbo-instruct",
+      model: "gpt-4o-mini",
       messages: [
         {
           role: "system",
@@ -23,6 +24,7 @@ export async function generateImagePrompt(name: string) {
     const data = await res.json()
     console.log("resopnse data", data)
     const image_description = data?.choices[0]?.message?.content
+    console.log("image_description", image_description)
     return image_description as string
   } catch (e) {
     console.log(e)

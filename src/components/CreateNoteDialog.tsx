@@ -3,15 +3,18 @@
 import React, { useState } from 'react'
 import { Dialog, DialogContent, DialogDescription, DialogHeader } from './ui/dialog'
 import { DialogTitle, DialogTrigger } from '@radix-ui/react-dialog'
-import { Plus } from 'lucide-react'
+import { Loader2, Plus } from 'lucide-react'
 import { Input } from './ui/input'
 import { Button } from './ui/button'
 import { useMutation } from '@tanstack/react-query'
+import { useRouter } from 'next/navigation'
 import axios from "axios"
+
 // type Props = {}
 
 const CreateNoteDialog = () => {
   const [input, setInput] = useState("")
+  const router = useRouter()
 
   const createNotebook = useMutation({
     mutationFn: async () => {
@@ -21,6 +24,7 @@ const CreateNoteDialog = () => {
       return res.data
     }
   })
+
   //Handle Submit function
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -29,10 +33,17 @@ const CreateNoteDialog = () => {
       return
     }
     createNotebook.mutate(undefined, {
-      onSuccess: ({ note_id }) => console.log("Yay, notes created", { note_id }),
-      onError: (e) => console.error(e)
+      onSuccess: ({ note_id }) => {
+        console.log("created new note", { note_id })
+        router.push(`/notebook/${note_id}`)
+      },
+      onError: (err) => {
+        console.error(err)
+        window.alert("Failed to create new notebook")
+      }
     })
   }
+
   return (
     <Dialog>
       <DialogTrigger>
@@ -55,7 +66,10 @@ const CreateNoteDialog = () => {
           <div className='h-4'></div>
           <div className='flex items-center gap-2'>
             <Button type='reset' variant={"secondary"}>Cancel</Button>
-            <Button type='submit' className='bg-green-600'>Create</Button>
+            <Button type='submit' disabled={createNotebook.isPending} className='bg-green-600'>
+              {createNotebook.isPending && <Loader2 className='w-4 h-4 mr-2 animate-spin' />}
+              {createNotebook.isPending ? "Creating..." : "Create"}
+            </Button>
           </div>
         </form>
       </DialogContent>
